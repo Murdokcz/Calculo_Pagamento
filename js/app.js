@@ -307,6 +307,12 @@ function mostrarResultadoSimulacao(resultado) {
 // Local Storage
 function salvarRegistro(registro) {
     let registros = JSON.parse(localStorage.getItem('registros') || '[]');
+
+    // Fix date to avoid timezone shift by saving as ISO string without time
+    const dateOnly = new Date(registro.data);
+    const isoDate = dateOnly.toISOString().split('T')[0];
+    registro.data = isoDate;
+
     registros.push(registro);
     localStorage.setItem('registros', JSON.stringify(registros));
 
