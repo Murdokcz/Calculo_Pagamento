@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Horas Extras e Simulação de Salário</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Header/Hero Section -->
+    <header class="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+        <div class="container mx-auto px-4 py-16 relative">
+            <div class="max-w-3xl mx-auto text-center">
+                <h1 class="text-4xl font-bold mb-4">Calculadora de Horas Extras</h1>
+                <p class="text-xl opacity-90">Calcule suas horas extras e simule seu salário mensal</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="bg-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-center space-x-4">
+                <button class="tab-button active py-4 px-6 text-blue-600 border-b-2 border-blue-600 font-medium" data-tab="calculadora">
+                    <i class="fas fa-calculator mr-2"></i>Calculadora
+                </button>
+                <button class="tab-button py-4 px-6 text-gray-500 hover:text-blue-600 font-medium" data-tab="historico">
+                    <i class="fas fa-history mr-2"></i>Histórico
+                </button>
+                <button class="tab-button py-4 px-6 text-gray-500 hover:text-blue-600 font-medium" data-tab="simulacao">
+                    <i class="fas fa-coins mr-2"></i>Simulação
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Calculadora Section -->
+        <section id="calculadora" class="tab-content active">
+            <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-semibold mb-6">Registrar Horas Trabalhadas</h2>
+                <form id="calculadoraForm" class="space-y-6">
+                    <!-- Nome -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nome</label>
+                        <input type="text" id="nome" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Data -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Data</label>
+                        <input type="date" id="data" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Horários -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Entrada</label>
+                            <input type="time" id="entrada" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Saída para Almoço</label>
+                            <input type="time" id="saidaAlmoco" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Retorno do Almoço</label>
+                            <input type="time" id="retornoAlmoco" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Saída</label>
+                            <input type="time" id="saida" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Feriado Checkbox -->
+                    <div class="flex items-center">
+                        <input type="checkbox" id="feriado" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="feriado" class="ml-2 block text-sm text-gray-700">É feriado?</label>
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Calcular Horas Extras
+                    </button>
+                </form>
+
+                <!-- Resultado -->
+                <div id="resultado" class="mt-6 hidden">
+                    <h3 class="text-lg font-semibold mb-4">Resultado do Cálculo</h3>
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-600">Horas Extras Normais:</p>
+                                <p id="horasExtrasNormais" class="text-lg font-semibold">0h</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Horas Extras 100%:</p>
+                                <p id="horasExtras100" class="text-lg font-semibold">0h</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="salvarRegistro" class="mt-4 w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                        Salvar Registro
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Histórico Section -->
+        <section id="historico" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-semibold mb-6">Histórico de Registros</h2>
+                
+                <!-- Filtros -->
+                <div class="mb-6 flex items-center space-x-4">
+                    <select id="filtroTipo" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="dia">Por Dia</option>
+                        <option value="semana">Por Semana</option>
+                        <option value="mes">Por Mês</option>
+                    </select>
+                    <input type="date" id="filtroData" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Tabela de Registros -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horários</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Extras Normais</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Extras 100%</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historicoTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Registros serão inseridos aqui via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Totais -->
+                <div class="mt-6 bg-gray-50 p-4 rounded-md">
+                    <h3 class="text-lg font-semibold mb-4">Total do Período</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600">Total Horas Extras Normais:</p>
+                            <p id="totalHorasNormais" class="text-lg font-semibold">0h</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Total Horas Extras 100%:</p>
+                            <p id="totalHoras100" class="text-lg font-semibold">0h</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simulação Section -->
+        <section id="simulacao" class="tab-content hidden">
+            <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-semibold mb-6">Simulação de Salário</h2>
+                <form id="simulacaoForm" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Valor Bruto do Salário</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2 text-gray-500">R$</span>
+                            <input type="number" id="salarioBruto" required min="0" step="0.01" class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Horas Extras Normais</label>
+                            <input type="number" id="horasExtrasNormaisSimulacao" required min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Horas Extras 100%</label>
+                            <input type="number" id="horasExtras100Simulacao" required min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Calcular Simulação
+                    </button>
+                </form>
+
+                <!-- Resultado da Simulação -->
+                <div id="resultadoSimulacao" class="mt-6 hidden">
+                    <h3 class="text-lg font-semibold mb-4">Resultado da Simulação</h3>
+                    <div class="bg-gray-50 p-4 rounded-md space-y-4">
+                        <div>
+                            <p class="text-sm text-gray-600">Valor da Hora Normal:</p>
+                            <p id="valorHoraNormal" class="text-lg font-semibold">R$ 0,00</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Total Horas Extras:</p>
+                            <p id="totalHorasExtras" class="text-lg font-semibold">R$ 0,00</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Desconto INSS:</p>
+                            <p id="descontoINSS" class="text-lg font-semibold">R$ 0,00</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Desconto Vale Alimentação:</p>
+                            <p id="descontoVA" class="text-lg font-semibold">R$ 30,45</p>
+                        </div>
+                        <div class="pt-4 border-t border-gray-200">
+                            <p class="text-sm font-medium text-gray-600">Valor Final a Receber:</p>
+                            <p id="valorFinal" class="text-2xl font-bold text-green-600">R$ 0,00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
