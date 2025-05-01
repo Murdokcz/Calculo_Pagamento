@@ -11,7 +11,6 @@ const JORNADA_PADRAO = 8 * 60 + 48; // 8 horas e 48 minutos em minutos
 const VALOR_VA = 30.45;
 const TAXA_INSS = 0.0783;
 
-// Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
     // Tab navigation
     tabButtons.forEach(button => {
@@ -58,7 +57,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup filtros
     setupFiltros();
+
+    // Setup limpar todos button
+    const limparTodosBtn = document.getElementById('limparTodosBtn');
+    if (limparTodosBtn) {
+        limparTodosBtn.addEventListener('click', () => {
+            clearAllRecords();
+        });
+    }
 });
+
+// Clear all records function
+function clearAllRecords() {
+    if (confirm('Tem certeza que deseja apagar todos os registros? Esta ação não pode ser desfeita.')) {
+        localStorage.removeItem('registros');
+        loadHistorico();
+        atualizarTotais([]);
+        alert('Todos os registros foram apagados.');
+    }
+}
 
 // Tab Switching
 function switchTab(tabId) {
@@ -125,25 +142,25 @@ function calcularMinutosTrabalhados(entrada, saidaAlmoco, retornoAlmoco, saida) 
     return Math.floor((periodoManha + periodoTarde) / (1000 * 60));
 }
 
-function calcularHorasExtras(minutosTrabalhados, data, isFeriado) {
-    const dataObj = new Date(data);
-    const diaSemana = dataObj.getDay();
-    
-    // Se for sábado (6)
-    if (diaSemana === 6) {
+function calcularHorasExtras(minutosTrabalhados, data, isFeriado, isSabado) {
+    // If "sabado" checkbox is checked, count all worked minutes as normal overtime
+    if (isSabado) {
         const horasExtras = minutosTrabalhados / 60;
         return {
-            normais: 0,
-            extras100: horasExtras
+            normais: horasExtras,
+            extras100: 0
         };
     }
 
+    const dataObj = new Date(data);
+    const diaSemana = dataObj.getDay();
+
     // Se for feriado
     if (isFeriado) {
-        const minutosExtras = minutosTrabalhados - JORNADA_PADRAO;
-        const horasExtras = minutosExtras > 0 ? minutosExtras / 60 : 0;
+        // Count all worked minutes as 100% overtime
+        const horasExtras = minutosTrabalhados / 60;
         return {
-            normais: horasExtras,
+            normais: 0,
             extras100: horasExtras
         };
     }
@@ -174,6 +191,7 @@ function handleCalculadoraSubmit(e) {
     const retornoAlmoco = document.getElementById('retornoAlmoco').value;
     const saida = document.getElementById('saida').value;
     const isFeriado = document.getElementById('feriado').checked;
+    const isSabado = document.getElementById('sabado').checked;
 
     // Validações
     if (!validarData(data)) {
@@ -188,7 +206,7 @@ function handleCalculadoraSubmit(e) {
 
     // Cálculos
     const minutosTrabalhados = calcularMinutosTrabalhados(entrada, saidaAlmoco, retornoAlmoco, saida);
-    const horasExtras = calcularHorasExtras(minutosTrabalhados, data, isFeriado);
+    const horasExtras = calcularHorasExtras(minutosTrabalhados, data, isFeriado, isSabado);
 
     // Mostrar resultado
     mostrarResultado(horasExtras);
@@ -202,19 +220,28 @@ function handleCalculadoraSubmit(e) {
         retornoAlmoco,
         saida,
         isFeriado,
-        horasExtras
+        horasExtras,
+        isSabado
     };
 
     document.getElementById('salvarRegistro').onclick = () => salvarRegistro(registro);
     resultado.classList.remove('hidden');
 }
 
+function parseTimeToDecimal(timeStr) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours + minutes / 60;
+}
+
 function handleSimulacaoSubmit(e) {
     e.preventDefault();
 
     const salarioBruto = parseFloat(document.getElementById('salarioBruto').value);
-    const horasExtrasNormais = parseFloat(document.getElementById('horasExtrasNormaisSimulacao').value);
-    const horasExtras100 = parseFloat(document.getElementById('horasExtras100Simulacao').value);
+    const horasExtrasNormaisStr = document.getElementById('horasExtrasNormaisSimulacao').value;
+    const horasExtras100Str = document.getElementById('horasExtras100Simulacao').value;
+
+    const horasExtrasNormais = parseTimeToDecimal(horasExtrasNormaisStr);
+    const horasExtras100 = parseTimeToDecimal(horasExtras100Str);
 
     // Cálculos
     const valorDiario = salarioBruto / 30;
@@ -295,25 +322,50 @@ function loadHistorico() {
     const tbody = document.getElementById('historicoTableBody');
     tbody.innerHTML = '';
 
-    registros.forEach((registro, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap">${formatarData(registro.data)}</td>
-            <td class="px-6 py-4">${registro.nome}</td>
-            <td class="px-6 py-4">
-                ${registro.entrada} - ${registro.saidaAlmoco}<br>
-                ${registro.retornoAlmoco} - ${registro.saida}
-            </td>
-            <td class="px-6 py-4">${registro.horasExtras.normais.toFixed(2)}h</td>
-            <td class="px-6 py-4">${registro.horasExtras.extras100.toFixed(2)}h</td>
-            <td class="px-6 py-4">
-                <button onclick="editarRegistro(${index})" class="text-blue-600 hover:text-blue-800">
-                    <i class="fas fa-edit"></i> Editar
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+        registros.forEach((registro, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">${formatarData(registro.data)}</td>
+                <td class="px-6 py-4">${registro.nome}</td>
+                <td class="px-6 py-4">
+                    ${registro.entrada} - ${registro.saidaAlmoco}<br>
+                    ${registro.retornoAlmoco} - ${registro.saida}
+                </td>
+                <td class="px-6 py-4">${formatDecimalHours(registro.horasExtras.normais)}</td>
+                <td class="px-6 py-4">${formatDecimalHours(registro.horasExtras.extras100)}</td>
+                <td class="px-6 py-4">
+                    <button onclick="editarRegistro(${index})" class="text-blue-600 hover:text-blue-800 mr-4">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
+                    <button onclick="excluirRegistro(${index})" class="text-red-600 hover:text-red-800">
+                        <i class="fas fa-trash-alt"></i> Excluir
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    
+// Function to delete a record
+function excluirRegistro(index) {
+    console.log('Excluir registro chamado para índice:', index);
+    let registrosRaw = localStorage.getItem('registros');
+    console.log('Raw registros from localStorage:', registrosRaw);
+    let registros = JSON.parse(registrosRaw || '[]');
+    console.log('Parsed registros:', registros);
+    if (!Array.isArray(registros)) {
+        console.error('Erro: registros não é um array');
+        return;
+    }
+    if (index < 0 || index >= registros.length) {
+        console.error('Erro: índice inválido para exclusão:', index);
+        return;
+    }
+    registros.splice(index, 1);
+    localStorage.setItem('registros', JSON.stringify(registros));
+    console.log('Registros após exclusão:', registros);
+    loadHistorico();
+    atualizarTotais(registros);
+}
 
     atualizarTotais(registros);
 }
@@ -380,9 +432,9 @@ function atualizarTotais(registros) {
     }, { normais: 0, extras100: 0 });
 
     document.getElementById('totalHorasNormais').textContent = 
-        `${totais.normais.toFixed(2)}h`;
+        formatDecimalHours(totais.normais);
     document.getElementById('totalHoras100').textContent = 
-        `${totais.extras100.toFixed(2)}h`;
+        formatDecimalHours(totais.extras100);
 }
 
 // Edição de Registros
