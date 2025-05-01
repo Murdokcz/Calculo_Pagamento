@@ -1,5 +1,3 @@
----
-
 ```markdown
 # Calculadora de Horas Extras e Simulação de Salário
 
