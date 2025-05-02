@@ -308,10 +308,8 @@ function mostrarResultadoSimulacao(resultado) {
 function salvarRegistro(registro) {
     let registros = JSON.parse(localStorage.getItem('registros') || '[]');
 
-    // Fix date to avoid timezone shift by saving as ISO string without time
-    const dateOnly = new Date(registro.data);
-    const isoDate = dateOnly.toISOString().split('T')[0];
-    registro.data = isoDate;
+    // Save the date string as-is to avoid timezone shift
+    registro.data = registro.data;
 
     registros.push(registro);
     localStorage.setItem('registros', JSON.stringify(registros));
@@ -321,6 +319,39 @@ function salvarRegistro(registro) {
 
     // Feedback
     alert('Registro salvo com sucesso!');
+}
+
+// Update aplicarFiltros to compare dates as strings to avoid timezone issues
+function aplicarFiltros() {
+    const tipo = document.getElementById('filtroTipo').value;
+    const data = document.getElementById('filtroData').value;
+    
+    let registros = JSON.parse(localStorage.getItem('registros') || '[]');
+    
+    if (data) {
+        switch(tipo) {
+            case 'dia':
+                registros = registros.filter(r => r.data === data);
+                break;
+            case 'semana':
+                registros = registros.filter(r => {
+                    const dataRegistro = new Date(r.data + 'T00:00:00Z');
+                    const dataFiltro = new Date(data + 'T00:00:00Z');
+                    return getWeekNumber(dataRegistro) === getWeekNumber(dataFiltro);
+                });
+                break;
+            case 'mes':
+                registros = registros.filter(r => {
+                    const dataRegistro = new Date(r.data + 'T00:00:00Z');
+                    const dataFiltro = new Date(data + 'T00:00:00Z');
+                    return dataRegistro.getUTCMonth() === dataFiltro.getUTCMonth() &&
+                           dataRegistro.getUTCFullYear() === dataFiltro.getUTCFullYear();
+                });
+                break;
+        }
+    }
+
+    atualizarTotais(registros);
 }
 
 function loadHistorico() {
@@ -419,7 +450,10 @@ function aplicarFiltros() {
 
 // Helpers
 function formatarData(data) {
-    return new Date(data).toLocaleDateString('pt-BR');
+    // Parse date string as UTC to avoid timezone shift
+    const parts = data.split('-');
+    const dateObj = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+    return dateObj.toLocaleDateString('pt-BR');
 }
 
 function getWeekNumber(d) {
